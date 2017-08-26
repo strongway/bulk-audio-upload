@@ -34,14 +34,14 @@ def get_thing_information(database_url):
 	for div in div_elements:
 		thing_id = div.attrib['data-thing-id']
 		try:
-			german_word = div.xpath("td[2]/div/div/text()")[0]
+			new_word = div.xpath("td[2]/div/div/text()")[0]
 		except IndexError:
 			print("failed to get the word of item with id " + str(thing_id) + ' on ' + str(database_url))
 			continue
 		column_number_of_audio = div.xpath("td[contains(@class, 'audio')]/@data-key")[0]
 		audio_files = div.xpath("td[contains(@class, 'audio')]/div/div[contains(@class, 'dropdown-menu')]/div")
 		number_of_audio_files = len(audio_files)
-		audios.append({'thing_id': thing_id, 'number_of_audio_files': number_of_audio_files, 'german_word': german_word, 'column_number_of_audio': column_number_of_audio})
+		audios.append({'thing_id': thing_id, 'number_of_audio_files': number_of_audio_files, 'new_word': new_word.replace('?',''), 'column_number_of_audio': column_number_of_audio})
 	sequence_through_audios(audios)
 #%%
 def download_audio(path):
@@ -61,16 +61,15 @@ def sequence_through_audios(audios):
 		if audio['number_of_audio_files'] > 0:
 			continue
 		else:
-			requests.post('http://soundoftext.com/sounds', data={'text':audio['german_word'].replace('?',''), 'lang':'de'}) # warn the server of what file I'm going to need
-			#german_word = german_word.replace(" ","_")
-			temp_file = download_audio('http://soundoftext.com/static/sounds/de/' + audio['german_word'].replace(' ','_').replace('?','') + '.mp3') #download audio file
+			requests.post('http://soundoftext.com/sounds', data={'text':audio['new_word'], 'lang':'de'}) # warn the server of what file I'm going to need
+			temp_file = download_audio('http://soundoftext.com/static/sounds/de/' + audio['new_word'].replace(' ','_') + '.mp3') #download audio file
 			if isinstance(temp_file, str):
-				print(audio['german_word'] + ' skipped: ' + temp_file)
+				print(audio['new_word'] + ' skipped: ' + temp_file)
 				continue
 			else:
 				upload_file_to_server(audio['thing_id'], audio['column_number_of_audio'], course_database_url, temp_file)
 				temp_file.close()
-				print(audio['german_word'] + ' succeeded')
+				print(audio['new_word'] + ' succeeded')
 
 #%%
 if __name__ == "__main__":
